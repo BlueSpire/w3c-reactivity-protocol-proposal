@@ -96,7 +96,7 @@ export const Observer = Object.freeze({
  */
 export const Observable = Object.freeze({
   trackAccess(target: object, propertyKey: string | symbol): void {
-    currentEngine.onAccess(target, propertyKey);
+    
   },
 
   trackChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void {
@@ -110,14 +110,14 @@ export const Observable = Object.freeze({
 
     Reflect.defineProperty(target, propertyKey, {
       get() {
-        Observable.trackAccess(this, propertyKey);
+        currentEngine.onAccess(this, propertyKey);
         return field.get(this) ?? defaultValue;
       },
 
       set(newValue) {
         const oldValue = field.get(this) ?? defaultValue;
         field.set(this, newValue);
-        Observable.trackChange(this, propertyKey, oldValue, newValue);
+        currentEngine.onChange(this, propertyKey, oldValue, newValue);
       }
     });
   }
@@ -132,14 +132,14 @@ export function observable(value: any, context: ClassAccessorDecoratorContext) {
 
       return {
         get() {
-          Observable.trackAccess(this, context.name);
+          currentEngine.onAccess(this, context.name);
           return get.call(this);
         },
 
         set(newValue: any) {
           const oldValue = get.call(this);
           set.call(this, newValue);
-          Observable.trackChange(this, context.name, oldValue, newValue);
+          currentEngine.onChange(this, context.name, oldValue, newValue);
         }
       };
     default:
@@ -161,16 +161,16 @@ export const Watch = Object.freeze({
   },
 
   function(func: Function, subscriber: Subscriber, ...args: any[]): Disposable {
-    const o = Observer.forFunction(func);
+    const o = currentEngine.createFunctionObserver(func);
     const originalSub = Subscriber.normalize(subscriber);
-    const newSubscriber = {
+    const newSub = {
       handleChange() {
         o.observe(...args);
         originalSub.handleChange();
       }
     };
 
-    o.subscribe(newSubscriber);
+    o.subscribe(newSub);
     o.observe(...args);
     return o;
   }
