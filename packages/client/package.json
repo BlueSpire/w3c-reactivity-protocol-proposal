@@ -1,0 +1,21 @@
+{
+  "name": "@bluespire/client",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A test client that uses the reactivity protocol.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "webpack --mode=production",
+    "start": "webpack serve"
+  },
+  "author": "EisenbergEffect",
+  "license": "MIT",
+  "dependencies": {
+    "@bluespire/reactivity": "*",
+    "@bluespire/test-reactivity-engine-one": "*",
+    "@bluespire/test-reactivity-engine-two": "*",
+    "@bluespire/test-view-engine": "*"
+  }
+}

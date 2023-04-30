@@ -10,6 +10,15 @@
   "references": [
     {
       "path": "../reactivity"
+    },
+    {
+      "path": "../test-reactivity-engine-one"
+    },
+    {
+      "path": "../test-reactivity-engine-two"
+    },
+    {
+      "path": "../test-view-engine"
     }
   ]
 }

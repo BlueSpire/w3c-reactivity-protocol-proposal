@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+      "pretty": true,
+      "moduleResolution": "node",
+      "module": "ESNext",
+      "target": "ESNext",
+      "sourceMap": true,
+      "declaration": true,
+      "declarationMap": true,
+      "importHelpers": true,
+      "noEmitOnError": false,
+      "lib": [
+          "DOM",
+          "ESNext"
+      ],
+      "strict": true,
+      "composite": true,
+      "forceConsistentCasingInFileNames": true
+  },
+  "exclude": [
+      "**/node_modules/**",
+      "**/*.spec.ts",
+      "**/dist/**/*"
+  ]
+}

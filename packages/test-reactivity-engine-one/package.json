@@ -1,0 +1,24 @@
+{
+  "name": "@bluespire/test-reactivity-engine-one",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A test reactivity engine implementation.",
+  "main": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json && tsc -b tsconfig.cjs.json"
+  },
+  "author": "EisenbergEffect",
+  "license": "MIT",
+  "dependencies": {
+    "@bluespire/reactivity": "*"
+  }
+}

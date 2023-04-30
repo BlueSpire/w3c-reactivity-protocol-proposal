@@ -1,0 +1,23 @@
+{
+  "name": "@bluespire/reactivity",
+  "version": "0.1.0",
+  "description": "A general purpose reactivity protocol.",
+  "main": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json && tsc -b tsconfig.cjs.json"
+  },
+  "author": "EisenbergEffect",
+  "license": "MIT",
+  "dependencies": {
+    "@bluespire/reactivity": "*"
+  }
+}
