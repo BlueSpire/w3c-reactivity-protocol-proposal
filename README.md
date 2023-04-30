@@ -1,6 +1,8 @@
-# Reactivity Protocol Proposl
+# Reactivity Protocol Proposal
 
 This repo contains a WIP design for a universal reactivity protocol, as part of the ongoing work of the W3C Web Components Community Group's Community Protocols effort. It also contains a couple test reactivity engine implementations, as well as view engine and application test consumers.
+
+The protocol itself can be found at `packages/reactivity/src/index.ts`.
 
 The primary purpose of this repo is to research, experiment, and try to understand whether a general reactivity protocol is feasible, allowing model systems to decouple themselves from view engines and reactivity libraries. If this experiment succeeds, it will be turned into an official proposal.
 
