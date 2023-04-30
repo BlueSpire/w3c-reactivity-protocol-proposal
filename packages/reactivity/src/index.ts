@@ -96,7 +96,7 @@ export const Observer = Object.freeze({
  */
 export const Observable = Object.freeze({
   trackAccess(target: object, propertyKey: string | symbol): void {
-    
+    currentEngine.onAccess(target, propertyKey);
   },
 
   trackChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void {
