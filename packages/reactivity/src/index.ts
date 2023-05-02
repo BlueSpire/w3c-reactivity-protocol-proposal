@@ -21,23 +21,24 @@ export interface Disposable {
 }
 
 export interface Observer extends Disposable {
-  observe(...args: any[]): any;
+  observe(...args: unknown[]): unknown;
   subscribe(subscriber: Subscriber): void;
   unsubscribe(subscriber: Subscriber): void;
 }
+
 export interface ReactivityEngine {
   onAccess(target: object, propertyKey: string | symbol): void;
   onChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void;
   createPropertyObserver?(propertyKey: string | symbol): Observer;
-  createFunctionObserver(func: Function): Observer;
+  createComputedObserver(func: Function): Observer;
 }
 
 const noopFunc = () => void 0;
 
-class NoopFunctionObserver implements Observer {
+class NoopComputedObserver implements Observer {
   constructor(private func: Function) {}
 
-  observe(...args: any[]) {
+  observe(...args: unknown[]) {
     return this.func.apply(null, args);
   }
 
@@ -49,8 +50,8 @@ class NoopFunctionObserver implements Observer {
 let noopEngine: ReactivityEngine = {
   onAccess: noopFunc,
   onChange: noopFunc,
-  createFunctionObserver(func: Function) {
-    return new NoopFunctionObserver(func);
+  createComputedObserver(func: Function) {
+    return new NoopComputedObserver(func);
   }
 };
 
@@ -81,11 +82,11 @@ export const Observer = Object.freeze({
     }
 
     const func = (target: any) => target[propertyKey];
-    return currentEngine.createFunctionObserver(func);
+    return currentEngine.createComputedObserver(func);
   },
 
-  forFunction(func: Function): Observer {
-    return currentEngine.createFunctionObserver(func);
+  forComputed(func: Function): Observer {
+    return currentEngine.createComputedObserver(func);
   }
 });
 
@@ -103,7 +104,12 @@ export const Observable = Object.freeze({
     currentEngine.onChange(target, propertyKey, oldValue, newValue);
   },
 
-  defineProperty(target: object, propertyKey: string | symbol, defaultValue?: any): void {
+  getAccessors(object: any) {
+    // TODO: return metadata
+    return [];
+  },
+
+  defineProperty(target: object, propertyKey: string | symbol): void {
     const field = new WeakMap();
 
     // TODO: store metadata
@@ -111,11 +117,11 @@ export const Observable = Object.freeze({
     Reflect.defineProperty(target, propertyKey, {
       get() {
         currentEngine.onAccess(this, propertyKey);
-        return field.get(this) ?? defaultValue;
+        return field.get(this);
       },
 
       set(newValue) {
-        const oldValue = field.get(this) ?? defaultValue;
+        const oldValue = field.get(this);
         field.set(this, newValue);
         currentEngine.onChange(this, propertyKey, oldValue, newValue);
       }
@@ -160,8 +166,8 @@ export const Watch = Object.freeze({
     return o;
   },
 
-  function(func: Function, subscriber: Subscriber, ...args: any[]): Disposable {
-    const o = currentEngine.createFunctionObserver(func);
+  computed(func: Function, subscriber: Subscriber, ...args: any[]): Disposable {
+    const o = currentEngine.createComputedObserver(func);
     const originalSub = Subscriber.normalize(subscriber);
     const newSub = {
       handleChange() {

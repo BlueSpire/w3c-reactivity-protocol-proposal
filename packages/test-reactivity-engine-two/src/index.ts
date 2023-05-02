@@ -7,7 +7,7 @@ export const testReactivityEngineTwo: ReactivityEngine = {
   onChange: function (target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void {
     throw new Error("Function not implemented.");
   },
-  createFunctionObserver: function (func: Function): Observer {
+  createComputedObserver: function (func: Function): Observer {
     throw new Error("Function not implemented.");
   }
 };
