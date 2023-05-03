@@ -1,29 +1,15 @@
-import { ReactivityEngine, observable } from "@bluespire/reactivity";
+import { ReactivityEngine, Watch } from "@bluespire/reactivity";
 import { testReactivityEngineOne } from "@bluespire/test-reactivity-engine-one";
-import { html } from "@bluespire/test-view-engine";
+import { Counter } from "./counter.js";
+import { template as counterTemplate } from "./coutner.template.js";
 
 ReactivityEngine.install(testReactivityEngineOne);
 
-class Counter {
-  @observable accessor count = 0;
+const model = new Counter();
+counterTemplate.render(model, document.body);
 
-  increment() {
-    this.count++;
-  }
-
-  decrement() {
-    this.count--;
-  }
-}
-
-const template = html`
-  <button data-bind="@click=decrement">-</button>
-  <span data-bind=":innerText=count"></span>
-  <button data-bind="@click=increment">+</button>
-`;
-
-const instance = new Counter();
-const view = template.create();
-
-view.bind(instance);
-view.appendTo(document.body);
+Watch.property(
+  model, 
+  "count", 
+  (_, oldValue, newValue) => console.log(`Counter updated from ${oldValue} to ${newValue}.`)
+);

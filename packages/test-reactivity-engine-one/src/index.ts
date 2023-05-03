@@ -165,7 +165,7 @@ class ComputedObserver extends SubscriberSet implements Observer {
 
   observe(...args: unknown[]): unknown {
     if (this.needsRefresh && this.last !== null) {
-      this.dispose();
+      this.disconnect();
     }
 
     const previousWatcher = watcher;
@@ -190,7 +190,7 @@ class ComputedObserver extends SubscriberSet implements Observer {
     super.unsubscribe(subscriber);
   }
 
-  dispose(): void {
+  disconnect(): void {
     if (this.last !== null) {
       let current = this.first;
 

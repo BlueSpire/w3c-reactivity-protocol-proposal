@@ -86,6 +86,13 @@ export class ViewTemplate {
     return new View(fragment, this.#directives);
   }
 
+  render(model: any, node: Node) {
+    const view = this.create();
+    view.bind(model);
+    view.appendTo(node);
+    return view;
+  }
+
   static for(htmlText: string) {
     let found = templateCache.get(htmlText);
     
@@ -152,7 +159,7 @@ class OneWayBindingBehavior implements Behavior {
   }
 
   unbind(): void {
-    this.observer.dispose();
+    this.observer.disconnect();
   }
 
   handleChange() {
@@ -193,7 +200,6 @@ export class View {
   constructor(fragment: DocumentFragment, directives: Directive[]) {
     this.#fragment = fragment;
     this.behaviors = [];
-
     this.#fragment.querySelectorAll("[data-bind]").forEach((target, i) => {
       const directive = directives[i];
       const behavior = createBehavior(directive, target);
