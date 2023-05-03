@@ -3,7 +3,7 @@
       "pretty": true,
       "moduleResolution": "node",
       "module": "ESNext",
-      "target": "ESNext",
+      "target": "ES2022",
       "sourceMap": true,
       "declaration": true,
       "declarationMap": true,

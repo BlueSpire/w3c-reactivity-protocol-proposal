@@ -4,15 +4,25 @@ import { html } from "@bluespire/test-view-engine";
 
 ReactivityEngine.install(testReactivityEngineOne);
 
-class Model {
-  @observable accessor firstName = "Rob";
+class Counter {
+  @observable accessor count = 0;
+
+  increment() {
+    this.count++;
+  }
+
+  decrement() {
+    this.count--;
+  }
 }
 
 const template = html`
-  <span data-bind=":innerText=firstName"></span>
+  <button data-bind="@click=decrement">-</button>
+  <span data-bind=":innerText=count"></span>
+  <button data-bind="@click=increment">+</button>
 `;
 
-const instance = new Model();
+const instance = new Counter();
 const view = template.create();
 
 view.bind(instance);
