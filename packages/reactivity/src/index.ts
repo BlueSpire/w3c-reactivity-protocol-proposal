@@ -87,6 +87,9 @@ class FallbackPropertyObserver implements Observer {
   }
 
   disconnect(): void {
+    this.#target = null;
+    this.#oldValue = null;
+    this.#currentValue = null;
     this.#computedObserver.disconnect();
   }
 
