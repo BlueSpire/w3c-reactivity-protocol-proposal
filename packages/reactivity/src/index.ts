@@ -211,15 +211,9 @@ export const Watch = Object.freeze({
   },
 
   computed(func: Function, subscriber: Subscriber, ...args: any[]): Disconnectable {
-    const o = currentEngine.createComputedObserver(func);
-    const originalSub = Subscriber.normalize(subscriber);
-    const newSub = {
-      handleChange(target: object, ...rest: any[]) {
-        originalSub.handleChange(target, ...rest);
-      }
-    };
-
-    o.subscribe(newSub);
+    const o = Observer.forComputed(func);
+    const s = Subscriber.normalize(subscriber);
+    o.subscribe(s);
     o.observe(...args);
     return o;
   }
