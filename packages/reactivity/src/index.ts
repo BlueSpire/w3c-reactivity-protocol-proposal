@@ -1,8 +1,8 @@
 export type SubscriberObject = {
-  handleChange(): void;
+  handleChange(target: object, ...args: any[]): void;
 };
 
-export type SubscriberCallback = () => void;
+export type SubscriberCallback = (target: object, ...args: any[]) => void;
 
 export type Subscriber = SubscriberObject | SubscriberCallback;
 
@@ -21,9 +21,9 @@ export interface Disposable {
 }
 
 export interface Observer extends Disposable {
-  observe(...args: unknown[]): unknown;
-  subscribe(subscriber: Subscriber): void;
-  unsubscribe(subscriber: Subscriber): void;
+  observe(...args: any[]): any;
+  subscribe(subscriber: SubscriberObject): void;
+  unsubscribe(subscriber: SubscriberObject): void;
 }
 
 export interface ReactivityEngine {
@@ -38,7 +38,7 @@ const noopFunc = () => void 0;
 class NoopComputedObserver implements Observer {
   constructor(private func: Function) {}
 
-  observe(...args: unknown[]) {
+  observe(...args: any[]) {
     return this.func.apply(null, args);
   }
 
@@ -161,7 +161,8 @@ export function observable(value: any, context: ClassAccessorDecoratorContext) {
 export const Watch = Object.freeze({
   property(target: object, propertyKey: string | symbol, subscriber: Subscriber): Disposable {
     const o = Observer.forProperty(propertyKey);
-    o.subscribe(subscriber);
+    const s = Subscriber.normalize(subscriber);
+    o.subscribe(s);
     o.observe(target);
     return o;
   },
@@ -170,9 +171,9 @@ export const Watch = Object.freeze({
     const o = currentEngine.createComputedObserver(func);
     const originalSub = Subscriber.normalize(subscriber);
     const newSub = {
-      handleChange() {
+      handleChange(target: object, ...rest: any[]) {
         o.observe(...args);
-        originalSub.handleChange();
+        originalSub.handleChange(target, ...rest);
       }
     };
 
