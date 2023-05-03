@@ -1,7 +1,5 @@
 import { Observer, ReactivityEngine, SubscriberObject } from "@bluespire/reactivity";
 
-let watcher: ComputedObserver | null = null;
-
 class SubscriberSet {
   private sub1: SubscriberObject | undefined = void 0;
   private sub2: SubscriberObject | undefined = void 0;
@@ -111,6 +109,17 @@ function getVersion(versionId: string) {
   return versions[versionId] ?? (versions[versionId] = 0);
 }
 
+function incrementVersion(target: any, propertyKey: string | symbol) {
+  const versionId = getVersionId(target, propertyKey);
+  const currentVersion = versions[versionId];
+
+  if (currentVersion === void 0) {
+    versions[versionId] = 1;
+  } else {
+    versions[versionId] = currentVersion + 1;
+  }
+}
+
 let head: ComputedObserver | null = null;
 let tail: ComputedObserver | null = null;
 
@@ -153,6 +162,8 @@ function checkList() {
     current = current.next;
   }
 }
+
+let watcher: ComputedObserver | null = null;
 
 class ComputedObserver extends SubscriberSet implements Observer {
   deps: Record<string, number> = Object.create(null);
@@ -211,8 +222,7 @@ export const testReactivityEngineTwo: ReactivityEngine = {
   },
   
   onChange: function (target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void {
-    const versionId = getVersionId(target, propertyKey);
-    versions[versionId] = getVersion(versionId) + 1;
+    incrementVersion(target, propertyKey);
     checkList();
   },
 
