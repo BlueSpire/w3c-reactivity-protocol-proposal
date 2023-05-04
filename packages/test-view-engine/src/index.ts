@@ -151,7 +151,7 @@ class OneWayBindingBehavior implements Behavior {
     this.model = model;
 
     if (!this.observer) {
-      this.observer = PropertyObserver(this);
+      this.observer = new PropertyObserver(this);
     }
 
     this.handleChange();

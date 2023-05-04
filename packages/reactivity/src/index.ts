@@ -94,6 +94,10 @@ let currentEngine: ReactivityEngine = noopEngine;
  * Enables a reactivity engine to install its implementation.
  */
 export const ReactivityEngine = Object.freeze({
+  /**
+   * Installs a reactivity engine.
+   * @param engine The engine to install.
+   */
   install(engine: ReactivityEngine) {
     if (currentEngine !== noopEngine) {
       throw new Error("You can only set the reactivity engine once.");
@@ -103,17 +107,23 @@ export const ReactivityEngine = Object.freeze({
   }
 });
 
-export const PropertyObserver = (subscriber: Subscriber) => {
+export const PropertyObserver = (function (subscriber: Subscriber) {
   if (currentEngine.createPropertyObserver) {
     return currentEngine.createPropertyObserver(subscriber);
   }
 
-  return new FallbackPropertyObserver(subscriber) as PropertyObserver; 
+  return new FallbackPropertyObserver(subscriber); 
+}) as any as {
+  prototype: PropertyObserver;
+  new(subscriber: Subscriber): PropertyObserver;
 }
 
-export const ComputedObserver = (subscriber: Subscriber) => {
+export const ComputedObserver = (function (subscriber: Subscriber) {
   return currentEngine.createComputedObserver(subscriber);
-}
+}) as any as {
+  prototype: ComputedObserver;
+  new(subscriber: Subscriber): ComputedObserver;
+};
 
 /**
  * Implement reactive properties.
@@ -154,6 +164,9 @@ export const Observable = Object.freeze({
   }
 });
 
+/**
+ * A decorator for accessors that makes them observable.
+ */
 export function observable(value: any, context: ClassAccessorDecoratorContext) {
   switch (context.kind) {
     case "accessor":
@@ -177,22 +190,3 @@ export function observable(value: any, context: ClassAccessorDecoratorContext) {
       throw new Error(`The observable decorator cannot be used on ${context.kind} targets.`);
   }
 }
-
-/**
- * Observe properties and functions.
- * @remarks
- * Primarily used by application developers when they need to explicitly observe changes in state.
- */
-export const Watch = Object.freeze({
-  property(subscriber: Subscriber, target: object, propertyKey: string | symbol): PropertyObserver {
-    const o = PropertyObserver(subscriber);
-    o.observe(target, propertyKey);
-    return o;
-  },
-
-  computed(subscriber: Subscriber, func: Function, ...args: any[]): ComputedObserver {
-    const o = ComputedObserver(subscriber);
-    o.observe(func, ...args);
-    return o;
-  }
-});
