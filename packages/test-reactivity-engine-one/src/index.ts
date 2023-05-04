@@ -1,5 +1,9 @@
-import { SubscriberObject } from "@bluespire/reactivity";
-import { Observer, ReactivityEngine } from "@bluespire/reactivity";
+import {
+  type ReactivityEngine,
+  Subscriber,
+  type SubscriberObject, 
+  type ComputedObserver as IComputedObserver 
+} from "@bluespire/reactivity";
 
 let watcher: ComputedObserver | null = null;
 const notifierLookup = new WeakMap<any, PropertyChangeNotifier>();
@@ -152,18 +156,18 @@ interface SubscriptionRecord {
   next: SubscriptionRecord | undefined;
 }
 
-class ComputedObserver extends SubscriberSet implements Observer {
+class ComputedObserver implements IComputedObserver {
   private needsRefresh: boolean = true;
   private isVolatileBinding = false;
   private first: SubscriptionRecord = this as any;
   private last: SubscriptionRecord | null = null;
+  #subscriber: SubscriberObject;
 
-  constructor(private func: Function) {
-    super(func);
-    this.isVolatileBinding = volatileRegex.test(func.toString());
+  constructor(subscriber: Subscriber) {
+    this.#subscriber = Subscriber.normalize(subscriber);
   }
 
-  observe(...args: unknown[]): unknown {
+  observe(func: Function, ...args: any[]): any {
     if (this.needsRefresh && this.last !== null) {
       this.disconnect();
     }
@@ -174,20 +178,12 @@ class ComputedObserver extends SubscriberSet implements Observer {
     let result;
 
     try {
-      result = this.func.apply(null, args);
+      result = func(...args);
     } finally {
       watcher = previousWatcher;
     }
 
     return result;
-  }
-
-  subscribe(subscriber: SubscriberObject): void {
-    super.subscribe(subscriber);
-  }
-
-  unsubscribe(subscriber: SubscriberObject): void {
-    super.unsubscribe(subscriber);
   }
 
   disconnect(): void {
@@ -240,7 +236,7 @@ class ComputedObserver extends SubscriberSet implements Observer {
 
   handleChange(): void {
     if (this.last !== null) {
-      this.notify();
+      this.#subscriber.handleChange(this);
     }
   }
 }
@@ -254,7 +250,7 @@ export const testReactivityEngineOne: ReactivityEngine = {
     getNotifier(target).notify(propertyKey, oldValue, newValue);
   },
 
-  createComputedObserver(func: Function): Observer {
-    return new ComputedObserver(func);
+  createComputedObserver(subscriber: Subscriber): IComputedObserver {
+    return new ComputedObserver(subscriber);
   }
 };

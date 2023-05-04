@@ -16,74 +16,62 @@ export const Subscriber = Object.freeze({
   }
 });
 
-export interface Disconnectable {
+export interface PropertyObserver {
+  observe(target: any, propertyKey: string | symbol): any;
   disconnect(): void;
 }
 
-export interface Observer extends Disconnectable {
-  observe(...args: any[]): any;
-  subscribe(subscriber: SubscriberObject): void;
-  unsubscribe(subscriber: SubscriberObject): void;
+export interface ComputedObserver {
+  observe(func: Function, ...args: any[]): any;
+  disconnect(): void;
 }
 
 export interface ReactivityEngine {
   onAccess(target: object, propertyKey: string | symbol): void;
   onChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void;
-  createPropertyObserver?(propertyKey: string | symbol): Observer;
-  createComputedObserver(func: Function): Observer;
+  createPropertyObserver?(subscriber: Subscriber): PropertyObserver;
+  createComputedObserver(subscriber: Subscriber): ComputedObserver;
 }
 
 const noopFunc = () => void 0;
 
-class NonObservingComputedObserver implements Observer {
-  constructor(private func: Function) {}
+class NonObservingComputedObserver implements ComputedObserver {
+  constructor(_: Subscriber) {}
 
-  observe(...args: any[]) {
-    return this.func.apply(null, args);
+  observe(func: Function, ...args: any[]) {
+    return func.apply(null, args);
   }
 
-  subscribe = noopFunc;
-  unsubscribe = noopFunc;
   disconnect = noopFunc;
 }
 
 let noopEngine: ReactivityEngine = {
   onAccess: noopFunc,
   onChange: noopFunc,
-  createComputedObserver(func: Function) {
-    return new NonObservingComputedObserver(func);
+  createComputedObserver(subscriber: Subscriber) {
+    return new NonObservingComputedObserver(subscriber);
   }
 };
 
-class FallbackPropertyObserver implements Observer {
-  #computedObserver: Observer;
-  #subscribers: SubscriberObject[] = [];
+class FallbackPropertyObserver implements PropertyObserver {
+  #computedObserver: ComputedObserver;
+  #subscriber: SubscriberObject;
   #oldValue: any;
   #currentValue: any;
   #target: any;
+  #func!: Function;
 
-  constructor(propertyKey: string | symbol) {
-    const func = (target: any) => target[propertyKey];
-    this.#computedObserver = currentEngine.createComputedObserver(func);
-    this.#computedObserver.subscribe(this);
+  constructor(subscriber: Subscriber) {
+    this.#subscriber = Subscriber.normalize(subscriber);
+    this.#computedObserver = currentEngine.createComputedObserver(this);
   }
 
-  observe(target: any) {
+  observe(target: any, propertyKey: string | symbol) {
     this.#target = target;
+    this.#func = () => this.#target[propertyKey];
     this.#oldValue = this.#currentValue;
-    this.#currentValue = this.#computedObserver.observe(target);
+    this.#currentValue = this.#computedObserver.observe(this.#func);
     return this.#currentValue;
-  }
-
-  subscribe(subscriber: SubscriberObject): void {
-    this.#subscribers.push(subscriber);
-  }
-
-  unsubscribe(subscriber: SubscriberObject): void {
-    const index = this.#subscribers.indexOf(subscriber);
-    if (index !== -1) {
-      this.#subscribers.splice(index, 1);
-    }
   }
 
   disconnect(): void {
@@ -93,9 +81,10 @@ class FallbackPropertyObserver implements Observer {
     this.#computedObserver.disconnect();
   }
 
-  handleChange() {
-    this.observe(this.#target);
-    this.#subscribers.forEach(x => x.handleChange(this.#target, this.#oldValue, this.#currentValue))
+  handleChange(): void {
+    this.#oldValue = this.#currentValue;
+    this.#currentValue = this.#computedObserver.observe(this.#func);
+    this.#subscriber.handleChange(this.#target, this.#oldValue, this.#currentValue);
   }
 }
 
@@ -120,16 +109,16 @@ export const ReactivityEngine = Object.freeze({
  * Primarily used by view engines to implement binding systems.
  */
 export const Observer = Object.freeze({
-  forProperty(propertyKey: string | symbol): Observer {
+  forProperty(subscriber: Subscriber): PropertyObserver {
     if (currentEngine.createPropertyObserver) {
-      return currentEngine.createPropertyObserver(propertyKey);
+      return currentEngine.createPropertyObserver(subscriber);
     }
 
-    return new FallbackPropertyObserver(propertyKey);
+    return new FallbackPropertyObserver(subscriber);
   },
 
-  forComputed(func: Function): Observer {
-    return currentEngine.createComputedObserver(func);
+  forComputed(subscriber: Subscriber): ComputedObserver {
+    return currentEngine.createComputedObserver(subscriber);
   }
 });
 
@@ -202,19 +191,15 @@ export function observable(value: any, context: ClassAccessorDecoratorContext) {
  * Primarily used by application developers when they need to explicitly observe changes in state.
  */
 export const Watch = Object.freeze({
-  property(target: object, propertyKey: string | symbol, subscriber: Subscriber): Disconnectable {
-    const o = Observer.forProperty(propertyKey);
-    const s = Subscriber.normalize(subscriber);
-    o.subscribe(s);
-    o.observe(target);
+  property(subscriber: Subscriber, target: object, propertyKey: string | symbol): PropertyObserver {
+    const o = Observer.forProperty(subscriber);
+    o.observe(target, propertyKey);
     return o;
   },
 
-  computed(func: Function, subscriber: Subscriber, ...args: any[]): Disconnectable {
-    const o = Observer.forComputed(func);
-    const s = Subscriber.normalize(subscriber);
-    o.subscribe(s);
-    o.observe(...args);
+  computed(subscriber: Subscriber, func: Function, ...args: any[]): ComputedObserver {
+    const o = Observer.forComputed(subscriber);
+    o.observe(func, ...args);
     return o;
   }
 });

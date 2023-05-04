@@ -1,90 +1,9 @@
-import { Observer, ReactivityEngine, SubscriberObject } from "@bluespire/reactivity";
-
-class SubscriberSet {
-  private sub1: SubscriberObject | undefined = void 0;
-  private sub2: SubscriberObject | undefined = void 0;
-  private spillover: SubscriberObject[] | undefined = void 0;
-
-  public readonly subject: any;
-
-  public constructor(subject: any) {
-    this.subject = subject;
-  }
-
-  public has(subscriber: SubscriberObject): boolean {
-    return this.spillover === void 0
-      ? this.sub1 === subscriber || this.sub2 === subscriber
-      : this.spillover.indexOf(subscriber) !== -1;
-  }
-
-  public subscribe(subscriber: SubscriberObject): void {
-    const spillover = this.spillover;
-
-    if (spillover === void 0) {
-      if (this.has(subscriber)) {
-        return;
-      }
-
-      if (this.sub1 === void 0) {
-        this.sub1 = subscriber;
-        return;
-      }
-
-      if (this.sub2 === void 0) {
-        this.sub2 = subscriber;
-        return;
-      }
-
-      this.spillover = [this.sub1, this.sub2, subscriber];
-      this.sub1 = void 0;
-      this.sub2 = void 0;
-    } else {
-      const index = spillover.indexOf(subscriber);
-      if (index === -1) {
-        spillover.push(subscriber);
-      }
-    }
-  }
-
-  public unsubscribe(subscriber: SubscriberObject): void {
-    const spillover = this.spillover;
-
-    if (spillover === void 0) {
-      if (this.sub1 === subscriber) {
-        this.sub1 = void 0;
-      } else if (this.sub2 === subscriber) {
-        this.sub2 = void 0;
-      }
-    } else {
-      const index = spillover.indexOf(subscriber);
-      if (index !== -1) {
-        spillover.splice(index, 1);
-      }
-    }
-  }
-
-  public notify(...args: any[]): void {
-    const spillover = this.spillover;
-    const subject = this.subject;
-
-    if (spillover === void 0) {
-      const sub1 = this.sub1;
-      const sub2 = this.sub2;
-
-      if (sub1 !== void 0) {
-        sub1.handleChange(subject, ...args);
-      }
-
-      if (sub2 !== void 0) {
-        sub2.handleChange(subject, ...args);
-      }
-    } else {
-      for (let i = 0, ii = spillover.length; i < ii; ++i) {
-        spillover[i].handleChange(subject, ...args);
-      }
-    }
-  }
-}
+import { 
+  type ReactivityEngine, 
+  type ComputedObserver as IComputedObserver, 
+  Subscriber, 
+  type SubscriberObject
+} from "@bluespire/reactivity";
 
 let objectId = 0;
 function nextObjectId() {
@@ -165,12 +84,18 @@ function checkList() {
 
 let watcher: ComputedObserver | null = null;
 
-class ComputedObserver extends SubscriberSet implements Observer {
-  deps: Record<string, number> = Object.create(null);
+class ComputedObserver implements IComputedObserver {
+  #deps: Record<string, number> = Object.create(null);
+  #subscriber: SubscriberObject;
+
   prev: ComputedObserver | null = null;
   next: ComputedObserver | null = null;
 
-  observe(...args: any[]) {
+  constructor(subscriber: Subscriber) {
+    this.#subscriber = Subscriber.normalize(subscriber);
+  }
+
+  observe(func: Function, ...args: any[]) {
     addToList(this);
 
     const previousWatcher = watcher;
@@ -178,7 +103,7 @@ class ComputedObserver extends SubscriberSet implements Observer {
     let result;
 
     try {
-      result = this.subject.apply(null, args);
+      result = func(...args);
     } finally {
       watcher = previousWatcher;
     }
@@ -193,12 +118,12 @@ class ComputedObserver extends SubscriberSet implements Observer {
   watch(target: any, propertyKey: string | symbol) {
     const versionId = getVersionId(target, propertyKey);
     const version = getVersion(versionId);
-    this.deps[versionId] = version;
+    this.#deps[versionId] = version;
   }
 
   check() {
     let needsNotify = false;
-    const deps = this.deps;
+    const deps = this.#deps;
 
     for (const versionId in deps) {
       const currentVersion = deps[versionId];
@@ -211,7 +136,7 @@ class ComputedObserver extends SubscriberSet implements Observer {
     }
 
     if (needsNotify) {
-      this.notify();
+      this.#subscriber.handleChange(this);
     }
   }
 }
@@ -226,7 +151,7 @@ export const testReactivityEngineTwo: ReactivityEngine = {
     checkList();
   },
 
-  createComputedObserver: function (func: Function): Observer {
-    return new ComputedObserver(func);
+  createComputedObserver(subscriber: Subscriber): IComputedObserver {
+    return new ComputedObserver(subscriber);
   }
 };

@@ -10,7 +10,7 @@ const model = new Counter();
 counterTemplate.render(model, document.body);
 
 Watch.property(
+  (_, oldValue, newValue) => console.log(`Counter updated from ${oldValue} to ${newValue}.`),
   model, 
-  "count", 
-  (_, oldValue, newValue) => console.log(`Counter updated from ${oldValue} to ${newValue}.`)
+  "count"
 );

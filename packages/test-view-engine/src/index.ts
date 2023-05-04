@@ -1,4 +1,4 @@
-import { Observer } from "@bluespire/reactivity";
+import { Observer, PropertyObserver } from "@bluespire/reactivity";
 
 export const DOMAspect = Object.freeze({
   none: 0,
@@ -140,7 +140,7 @@ class ListenerBehavior implements Behavior {
 
 class OneWayBindingBehavior implements Behavior {
   private model: any;
-  private observer!: Observer;
+  private observer!: PropertyObserver;
 
   constructor(
     private directive: Directive, 
@@ -151,8 +151,7 @@ class OneWayBindingBehavior implements Behavior {
     this.model = model;
 
     if (!this.observer) {
-      this.observer = Observer.forProperty(this.directive.behavior);
-      this.observer.subscribe(this);
+      this.observer = Observer.forProperty(this);
     }
 
     this.handleChange();
@@ -163,7 +162,7 @@ class OneWayBindingBehavior implements Behavior {
   }
 
   handleChange() {
-    const value = this.observer.observe(this.model);
+    const value = this.observer.observe(this.model, this.directive.behavior);
 
     switch(this.directive.aspectType) {
       case DOMAspect.attribute:
