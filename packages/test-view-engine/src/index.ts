@@ -1,4 +1,4 @@
-import { Observer, PropertyObserver } from "@bluespire/reactivity";
+import { PropertyObserver } from "@bluespire/reactivity";
 
 export const DOMAspect = Object.freeze({
   none: 0,
@@ -151,7 +151,7 @@ class OneWayBindingBehavior implements Behavior {
     this.model = model;
 
     if (!this.observer) {
-      this.observer = Observer.forProperty(this);
+      this.observer = PropertyObserver(this);
     }
 
     this.handleChange();

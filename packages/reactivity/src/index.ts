@@ -103,24 +103,17 @@ export const ReactivityEngine = Object.freeze({
   }
 });
 
-/**
- * Create various types of observers.
- * @remarks
- * Primarily used by view engines to implement binding systems.
- */
-export const Observer = Object.freeze({
-  forProperty(subscriber: Subscriber): PropertyObserver {
-    if (currentEngine.createPropertyObserver) {
-      return currentEngine.createPropertyObserver(subscriber);
-    }
-
-    return new FallbackPropertyObserver(subscriber);
-  },
-
-  forComputed(subscriber: Subscriber): ComputedObserver {
-    return currentEngine.createComputedObserver(subscriber);
+export const PropertyObserver = (subscriber: Subscriber) => {
+  if (currentEngine.createPropertyObserver) {
+    return currentEngine.createPropertyObserver(subscriber);
   }
-});
+
+  return new FallbackPropertyObserver(subscriber) as PropertyObserver; 
+}
+
+export const ComputedObserver = (subscriber: Subscriber) => {
+  return currentEngine.createComputedObserver(subscriber);
+}
 
 /**
  * Implement reactive properties.
@@ -192,13 +185,13 @@ export function observable(value: any, context: ClassAccessorDecoratorContext) {
  */
 export const Watch = Object.freeze({
   property(subscriber: Subscriber, target: object, propertyKey: string | symbol): PropertyObserver {
-    const o = Observer.forProperty(subscriber);
+    const o = PropertyObserver(subscriber);
     o.observe(target, propertyKey);
     return o;
   },
 
   computed(subscriber: Subscriber, func: Function, ...args: any[]): ComputedObserver {
-    const o = Observer.forComputed(subscriber);
+    const o = ComputedObserver(subscriber);
     o.observe(func, ...args);
     return o;
   }
