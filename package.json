@@ -7,7 +7,7 @@
         "./packages/test-reactivity-engine-one",
         "./packages/test-reactivity-engine-two",
         "./packages/test-view-engine",
-        "./packages/client"
+        "./packages/app"
     ],
     "author": "EisenbergEffect",
     "description": "An experiment in designing a Reactivity protocol for the W3C Community Protocols group.",

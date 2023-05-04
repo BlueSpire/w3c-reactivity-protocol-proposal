@@ -1,4 +1,4 @@
-import { observable } from "@bluespire/reactivity";
+import { observable } from "@w3c-protocols/reactivity";
 
 export class Counter {
   @observable accessor count = 0;

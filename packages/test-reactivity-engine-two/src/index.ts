@@ -3,7 +3,7 @@ import {
   type ComputedObserver as IComputedObserver, 
   Subscriber, 
   type SubscriberObject
-} from "@bluespire/reactivity";
+} from "@w3c-protocols/reactivity";
 
 let objectId = 0;
 function nextObjectId() {

@@ -4,7 +4,7 @@ import {
   type SubscriberObject, 
   type ComputedObserver as IComputedObserver,
   type PropertyObserver as IPropertyObserver
-} from "@bluespire/reactivity";
+} from "@w3c-protocols/reactivity";
 
 let watcher: ComputedObserver | null = null;
 const notifierLookup = new WeakMap<any, PropertyChangeNotifier>();
@@ -243,6 +243,8 @@ class ComputedObserver implements IComputedObserver {
   }
 
   handleChange(): void {
+    // TODO: queue
+    
     if (this.last !== null) {
       this.#subscriber.handleChange(this);
     }

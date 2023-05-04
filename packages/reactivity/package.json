@@ -1,5 +1,5 @@
 {
-  "name": "@bluespire/reactivity",
+  "name": "@w3c-protocols/reactivity",
   "version": "0.1.0",
   "description": "A general purpose reactivity protocol.",
   "main": "dist/esm/index.js",
@@ -16,8 +16,5 @@
     "build": "tsc -b tsconfig.json && tsc -b tsconfig.cjs.json"
   },
   "author": "EisenbergEffect",
-  "license": "MIT",
-  "dependencies": {
-    "@bluespire/reactivity": "*"
-  }
+  "license": "MIT"
 }

@@ -19,6 +19,6 @@
   "author": "EisenbergEffect",
   "license": "MIT",
   "dependencies": {
-    "@bluespire/reactivity": "*"
+    "@w3c-protocols/reactivity": "*"
   }
 }

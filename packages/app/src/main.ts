@@ -1,8 +1,9 @@
-import { PropertyObserver, ReactivityEngine } from "@bluespire/reactivity";
+import { PropertyObserver, ReactivityEngine } from "@w3c-protocols/reactivity";
 import { testReactivityEngineOne } from "@bluespire/test-reactivity-engine-one";
-import { Counter } from "./counter.js";
-import { template as counterTemplate } from "./coutner.template.js";
 import { testReactivityEngineTwo } from "@bluespire/test-reactivity-engine-two";
+import { Counter } from "./counter.js";
+import { template as counterTemplate } from "./counter.template.js";
+
 
 ReactivityEngine.install(testReactivityEngineTwo);
 

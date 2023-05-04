@@ -1,5 +1,5 @@
 {
-  "name": "@bluespire/client",
+  "name": "@bluespire/test-reactivity-app",
   "private": true,
   "version": "0.1.0",
   "description": "A test client that uses the reactivity protocol.",
@@ -13,7 +13,7 @@
   "author": "EisenbergEffect",
   "license": "MIT",
   "dependencies": {
-    "@bluespire/reactivity": "*",
+    "@w3c-protocols/reactivity": "*",
     "@bluespire/test-reactivity-engine-one": "*",
     "@bluespire/test-reactivity-engine-two": "*",
     "@bluespire/test-view-engine": "*"

@@ -1,4 +1,4 @@
-import { PropertyObserver } from "@bluespire/reactivity";
+import { PropertyObserver } from "@w3c-protocols/reactivity";
 
 export const DOMAspect = Object.freeze({
   none: 0,
