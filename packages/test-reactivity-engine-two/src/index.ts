@@ -39,52 +39,61 @@ function incrementVersion(target: any, propertyKey: string | symbol) {
   }
 }
 
-let head: ComputedObserver | null = null;
-let tail: ComputedObserver | null = null;
-
-function addToList(item: ComputedObserver) {
-  if (item.prev || item === head) {
-    return;
-  }
-
-  if (tail !== null) {
-    tail.next = item;
-    item.prev = tail;
-    tail = item;
-  } else {
-    head = item;
-    tail = item;
-  }
+interface ObserverListItem {
+  next: ObserverListItem | null;
+  prev: ObserverListItem | null;
+  check(): void;
 }
 
-function removeFromList(item: ComputedObserver) {
-  const next = item.next;
-  const prev = item.prev;
-
-  if (next) {
-    next.prev = prev;
+class ObserverList {
+  #head: ObserverListItem | null = null;
+  #tail: ObserverListItem | null = null;
+  
+  add(item: ObserverListItem) {
+    if (item.prev || item === this.#head) {
+      return;
+    }
+  
+    if (this.#tail !== null) {
+      this.#tail.next = item;
+      item.prev = this.#tail;
+      this.#tail = item;
+    } else {
+      this.#head = item;
+      this.#tail = item;
+    }
   }
 
-  if (prev) {
-    prev.next = next;
+  remove(item: ObserverListItem) {
+    const next = item.next;
+    const prev = item.prev;
+  
+    if (next) {
+      next.prev = prev;
+    }
+  
+    if (prev) {
+      prev.next = next;
+    }
+  
+    item.next = null;
+    item.prev = null;
   }
 
-  item.next = null;
-  item.prev = null;
-}
-
-function checkList() {
-  let current = head;
-
-  while (current !== null) {
-    current.check();
-    current = current.next;
+  check() {
+    let current = this.#head;
+  
+    while (current !== null) {
+      current.check();
+      current = current.next;
+    }
   }
 }
 
 let watcher: ComputedObserver | null = null;
+const currentList = new ObserverList();
 
-class ComputedObserver implements IComputedObserver {
+class ComputedObserver implements IComputedObserver, ObserverListItem {
   #deps: Record<string, number> = Object.create(null);
   #subscriber: SubscriberObject;
 
@@ -96,7 +105,7 @@ class ComputedObserver implements IComputedObserver {
   }
 
   observe(func: Function, ...args: any[]) {
-    addToList(this);
+    currentList.add(this);
 
     const previousWatcher = watcher;
     watcher = this;
@@ -112,7 +121,7 @@ class ComputedObserver implements IComputedObserver {
   }
 
   disconnect(): void {
-    removeFromList(this);
+    currentList.remove(this);
   }
 
   watch(target: any, propertyKey: string | symbol) {
@@ -148,7 +157,9 @@ export const testReactivityEngineTwo: ReactivityEngine = {
   
   onChange: function (target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void {
     incrementVersion(target, propertyKey);
-    checkList();
+
+    // TODO: queue and account for changes that happen during traversal
+    currentList.check();
   },
 
   createComputedObserver(subscriber: Subscriber): IComputedObserver {

@@ -4,7 +4,7 @@ import { Counter } from "./counter.js";
 import { template as counterTemplate } from "./coutner.template.js";
 import { testReactivityEngineTwo } from "@bluespire/test-reactivity-engine-two";
 
-ReactivityEngine.install(testReactivityEngineOne);
+ReactivityEngine.install(testReactivityEngineTwo);
 
 const model = new Counter();
 counterTemplate.render(model, document.body);
