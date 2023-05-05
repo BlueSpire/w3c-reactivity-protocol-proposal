@@ -52,7 +52,7 @@ function assignAspect(directive: Directive, value?: string): void {
 }
 
 
-const templateCache = new Map();
+const templateCache = new Map<string, ViewTemplate>();
 export class ViewTemplate {
   #template: HTMLTemplateElement | null = null;
   #html: string;
@@ -91,6 +91,10 @@ export class ViewTemplate {
     view.bind(model);
     view.appendTo(node);
     return view;
+  }
+
+  toString() {
+    return this.#html;
   }
 
   static for(htmlText: string) {
@@ -233,6 +237,8 @@ export function html(strings: TemplateStringsArray, ...values: any[]) {
     
     if (Array.isArray(value)) {
       value = value.join("");
+    } else if (value instanceof ViewTemplate) {
+      value = value.toString();
     }
 
     htmlString += value;
