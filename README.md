@@ -1,19 +1,28 @@
-# Reactivity Protocol Proposal
+# W3C Reactivity Protocol Proposal
 
-This repo contains a WIP design for a universal reactivity protocol, as part of the ongoing work of the W3C Web Components Community Group's Community Protocols effort. It also contains a couple test reactivity engine implementations, as well as view engine and application test consumers.
+This repo contains a work-in-progress design for a universal reactivity protocol, as part of the ongoing work of the W3C Web Components Community Group's Community Protocols effort. It also contains two test reactivity engine implementations, as well as a test view engine and a test application.
 
-The protocol itself can be found at `packages/reactivity/src/index.ts`.
+Here are a few interesting places to look:
 
-The primary purpose of this repo is to research, experiment, and try to understand whether a general reactivity protocol is feasible, allowing model systems to decouple themselves from view engines and reactivity libraries. If this experiment succeeds, it will be turned into an official proposal.
+* The proposal can be found in `proposal.md`.
+* The protocol implementation can be found in `packages/reactivity/src/index.ts`.
+* You can see a reactive model built with only a reference to the protocol in `packages/app/src/counter.ts`.
+* You can see how the test app configures the reactivity engine in `packages/app/src/main.ts`.
+  * You can swap out the two reactivity engine implementations here without any changes to the view engine or the model.
 
-## Setup
+The primary purpose of this repo is to research, experiment, and try to understand whether a general reactivity protocol is feasible, allowing:
+
+  * Model systems to decouple themselves from view engines and reactivity libraries. 
+  * View engines to decouple themselves from reactivity libraries.
+
+## Repo Setup
 
 1. Run `npm i` at the root of this repo to install dependencies.
 2. Run `npm run build` at the root of this repo to build all packages.
 
 ### Test Client
 
-1. Run `npm start` in the client folder to build and run the test app in watch mode. Edit the `main.ts` file to swap out view engine implementations.
+1. Run `npm start` in the `packages/app` folder to build and run the test app in watch mode. Edit the `src/main.ts` file to swap out view engine implementations.
 
 ## Project Structure
 
