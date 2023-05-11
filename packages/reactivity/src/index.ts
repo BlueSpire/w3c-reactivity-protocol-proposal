@@ -1,10 +1,10 @@
-export type SubscriberObject = {
-  handleChange(target: object, ...args: any[]): void;
+export type SubscriberObject<T = any> = {
+  handleChange(target: T, ...args: any[]): void;
 };
 
-export type SubscriberCallback = (target: object, ...args: any[]) => void;
+export type SubscriberCallback<T = any> = (target: T, ...args: any[]) => void;
 
-export type Subscriber = SubscriberObject | SubscriberCallback;
+export type Subscriber<T = any> = SubscriberObject<T> | SubscriberCallback<T>;
 
 export const Subscriber = Object.freeze({
   normalize(subscriber: Subscriber): SubscriberObject {
@@ -45,7 +45,7 @@ class NonObservingComputedObserver implements ComputedObserver {
   constructor(_: Subscriber) {}
 
   observe(func: Function, ...args: any[]) {
-    return func.apply(null, args);
+    return func(...args);
   }
 
   disconnect = noopFunc;
@@ -178,7 +178,7 @@ export const ComputedObserver = (function (subscriber: Subscriber) {
   return currentEngine.createComputedObserver(subscriber);
 }) as any as {
   prototype: ComputedObserver;
-  new(subscriber: Subscriber): ComputedObserver;
+  new(subscriber: Subscriber<ComputedObserver>): ComputedObserver;
 };
 
 /**

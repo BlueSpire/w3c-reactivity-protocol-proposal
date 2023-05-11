@@ -1,4 +1,4 @@
-import { ObjectyObserver, PropertyObserver, ReactivityEngine } from "@w3c-protocols/reactivity";
+import { ComputedObserver, ObjectyObserver, PropertyObserver, ReactivityEngine } from "@w3c-protocols/reactivity";
 import { testReactivityEngineOne } from "@bluespire/test-reactivity-engine-one";
 import { testReactivityEngineTwo } from "@bluespire/test-reactivity-engine-two";
 import { Counter } from "./counter.js";
@@ -23,3 +23,13 @@ watcher1.observe(model, "count");
 // Once we have decorator metadata in place, we can fix this.
 const watcher2 = new ObjectyObserver((_, p, ov, nv) => console.log(`ObjectObserver: Counter updated "${p}" from ${ov} to ${nv}.`));
 watcher2.observe(model);
+
+// Developers can use the protocol to create their own effect API
+// without worrying about the underlying implementation.
+function useEffect(func: Function) {
+  const watcher = new ComputedObserver(o => o.observe(func));
+  watcher.observe(func);
+  return watcher;
+}
+
+useEffect(() => console.log(`ComputedObserver: Count is ${model.count}.`));
