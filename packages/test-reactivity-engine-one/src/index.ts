@@ -3,7 +3,9 @@ import {
   Subscriber,
   type SubscriberObject, 
   type ComputedObserver as IComputedObserver,
-  type PropertyObserver as IPropertyObserver
+  type PropertyObserver as IPropertyObserver,
+  type ObjectObserver as IObjectObserver,
+  ObjectyObserver
 } from "@w3c-protocols/reactivity";
 
 let watcher: ComputedObserver | null = null;
@@ -290,7 +292,39 @@ class PropertyObserver implements IPropertyObserver {
   handleChange() {
     this.#oldValue = this.#currentValue;
     this.#currentValue = this.#notifier!.subject[this.#propertyKey!];
-    this.#subscriber.handleChange(this.#notifier!.subject, this.#oldValue, this.#currentValue);
+    this.#subscriber.handleChange(this.#notifier!.subject, this.#propertyKey, this.#oldValue, this.#currentValue);
+  }
+}
+
+class ObjectObserver implements IObjectObserver {
+  #subscriber: SubscriberObject;
+  #notifier: PropertyChangeNotifier | null = null;
+
+  constructor(subscriber: Subscriber) {
+    this.#subscriber = Subscriber.normalize(subscriber);
+  }
+
+  observe(target: any) {
+    const notifier = getNotifier(target);
+    if (this.#notifier !== notifier) {
+      this.disconnect();
+    }
+
+    this.#notifier = notifier;
+    this.#notifier.subscribe(this);
+
+    return target;
+  }
+
+  disconnect(): void {
+    if (this.#notifier) {
+      this.#notifier.unsubscribe(this.#subscriber);
+      this.#notifier = null;
+    }
+  }
+
+  handleChange(target: any, propertyKey: string | symbol, oldValue: any, newValue: any) {
+    this.#subscriber.handleChange(target, propertyKey, oldValue, newValue);
   }
 }
 
@@ -309,5 +343,9 @@ export const testReactivityEngineOne: ReactivityEngine = {
 
   createPropertyObserver(subscriber: Subscriber): IPropertyObserver {
     return new PropertyObserver(subscriber);
+  },
+
+  createObjectObserver(subcriber: Subscriber): IObjectObserver {
+    return new ObjectObserver(subcriber);
   }
 };

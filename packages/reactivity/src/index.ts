@@ -21,6 +21,11 @@ export interface PropertyObserver {
   disconnect(): void;
 }
 
+export interface ObjectObserver {
+  observe(target: any): any;
+  disconnect(): void;
+}
+
 export interface ComputedObserver {
   observe(func: Function, ...args: any[]): any;
   disconnect(): void;
@@ -30,6 +35,7 @@ export interface ReactivityEngine {
   onAccess(target: object, propertyKey: string | symbol): void;
   onChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void;
   createPropertyObserver?(subscriber: Subscriber): PropertyObserver;
+  createObjectObserver?(subscriber: Subscriber): ObjectObserver;
   createComputedObserver(subscriber: Subscriber): ComputedObserver;
 }
 
@@ -59,6 +65,7 @@ class FallbackPropertyObserver implements PropertyObserver {
   #oldValue: any;
   #currentValue: any;
   #target: any;
+  #propertyKey!: string | symbol;
   #func!: Function;
 
   constructor(subscriber: Subscriber) {
@@ -68,6 +75,7 @@ class FallbackPropertyObserver implements PropertyObserver {
 
   observe(target: any, propertyKey: string | symbol) {
     this.#target = target;
+    this.#propertyKey = propertyKey;
     this.#func = () => this.#target[propertyKey];
     this.#oldValue = this.#currentValue;
     this.#currentValue = this.#computedObserver.observe(this.#func);
@@ -84,7 +92,44 @@ class FallbackPropertyObserver implements PropertyObserver {
   handleChange(): void {
     this.#oldValue = this.#currentValue;
     this.#currentValue = this.#computedObserver.observe(this.#func);
-    this.#subscriber.handleChange(this.#target, this.#oldValue, this.#currentValue);
+    this.#subscriber.handleChange(this.#target, this.#propertyKey, this.#oldValue, this.#currentValue);
+  }
+}
+
+class FallbackObjectObserver implements ObjectObserver {
+  #observers: PropertyObserver[] = [];
+  #subscriber: SubscriberObject;
+  #target: any;
+
+  constructor(subscriber: Subscriber) {
+    this.#subscriber = Subscriber.normalize(subscriber);
+  }
+
+  observe(target: any) {
+    if (target === this.#target) {
+      return;
+    }
+
+    this.disconnect();
+    this.#target = target;
+
+    for (const key of Observable.getAccessors(target)) {
+      const o = new PropertyObserver(this);
+      o.observe(target, key);
+      this.#observers.push(o);
+    }
+
+    return target;
+  }
+
+  disconnect(): void {
+    this.#target = null;
+    this.#observers.forEach(x => x.disconnect());
+    this.#observers.length = 0;
+  }
+
+  handleChange(target: any, propertyKey: string | symbol, oldValue: any, newValue: any): void {
+    this.#subscriber.handleChange(target, propertyKey, oldValue, newValue);
   }
 }
 
@@ -116,6 +161,17 @@ export const PropertyObserver = (function (subscriber: Subscriber) {
 }) as any as {
   prototype: PropertyObserver;
   new(subscriber: Subscriber): PropertyObserver;
+}
+
+export const ObjectyObserver = (function (subscriber: Subscriber) {
+  if (currentEngine.createObjectObserver) {
+    return currentEngine.createObjectObserver(subscriber);
+  }
+
+  return new FallbackObjectObserver(subscriber); 
+}) as any as {
+  prototype: ObjectObserver;
+  new(subscriber: Subscriber): ObjectObserver;
 }
 
 export const ComputedObserver = (function (subscriber: Subscriber) {
