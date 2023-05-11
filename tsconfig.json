@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
       "pretty": true,
-      "moduleResolution": "node",
+      "moduleResolution": "Node16",
       "module": "ESNext",
       "target": "ES2022",
       "sourceMap": true,
@@ -15,7 +15,7 @@
       ],
       "strict": true,
       "composite": true,
-      "forceConsistentCasingInFileNames": true
+      "forceConsistentCasingInFileNames": true,
   },
   "exclude": [
       "**/node_modules/**",

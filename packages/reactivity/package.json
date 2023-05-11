@@ -10,6 +10,16 @@
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./utilities": {
+      "types": "./dist/esm/utilities.d.ts",
+      "import": "./dist/esm/utilities.js",
+      "require": "./dist/cjs/utilities.js"
+    },
+    "./fallbacks": {
+      "types": "./dist/esm/fallbacks.d.ts",
+      "import": "./dist/esm/fallbacks.js",
+      "require": "./dist/cjs/fallbacks.js"
     }
   },
   "scripts": {
