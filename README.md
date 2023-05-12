@@ -6,14 +6,14 @@ Here are a few interesting places to look:
 
 * The proposal can be found in `proposal.md`.
 * The protocol implementation can be found in `packages/reactivity/src/index.ts`.
-* You can see a reactive model built with only a reference to the protocol in `packages/app/src/counter.ts`.
+* An `effect` utility built on top of the protocol can be found in `packages/reactivity/src/utilities.ts`.
+* A reactive model built with only a reference to the protocol can be found in `packages/app/src/counter.ts`.
 * You can see how the test app configures the reactivity engine in `packages/app/src/main.ts`.
   * You can swap out the two reactivity engine implementations here without any changes to the view engine or the model.
 
-The primary purpose of this repo is to research, experiment, and try to understand whether a general reactivity protocol is feasible, allowing:
+> **NOTE:** There are no tests at this time. If/When enough interest appears as well as a desire to move this forward, a full test suite will be written, documentation will be added, etc. For now, the intent is just to get the conversation started.
 
-  * Model systems to decouple themselves from view engines and reactivity libraries. 
-  * View engines to decouple themselves from reactivity libraries.
+> **WARNING:** Do not even think about using the test reactivity engines or the test view engine in a real app. They have been deliberately simplified, have known issues, and are not the least bit production-ready.
 
 ## Repo Setup
 
