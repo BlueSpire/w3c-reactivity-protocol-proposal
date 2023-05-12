@@ -129,19 +129,27 @@ export const Observable = Object.freeze({
     return [];
   },
 
-  defineProperty(target: object, propertyKey: string | symbol): void {
+  defineProperty(target: object, propertyKey: string | symbol, initializer?: () => any): void {
     const field = new WeakMap();
 
     // TODO: store metadata
 
+    function getValue(instance: object) {
+      if (initializer && !field.has(instance)) {
+        field.set(instance, initializer());
+      }
+
+      return field.get(instance);
+    }
+
     Reflect.defineProperty(target, propertyKey, {
       get() {
         currentEngine.onAccess(this, propertyKey);
-        return field.get(this);
+        return getValue(this);
       },
 
       set(newValue) {
-        const oldValue = field.get(this);
+        const oldValue = getValue(this);
         field.set(this, newValue);
         currentEngine.onChange(this, propertyKey, oldValue, newValue);
       }
