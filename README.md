@@ -13,7 +13,7 @@ Here are a few interesting places to look:
 
 > **NOTE:** There are no tests at this time. If/When enough interest appears as well as a desire to move this forward, a full test suite will be written, documentation will be added, etc. For now, the intent is just to get the conversation started.
 
-> **WARNING:** Do not even think about using the test reactivity engines or the test view engine in a real app. They have been deliberately simplified, have known issues, and are not the least bit production-ready.
+> **WARNING:** Do not even think about using the test reactivity engines or the test view engine in a real app. They have been deliberately simplified, have known issues, and are not the least bit production-ready. They serve only to validate the protocol.
 
 ## Repo Setup
 

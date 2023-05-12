@@ -1,18 +1,122 @@
 # W3C Reactivity Protocol Proposal
 
-## Problem
-
-
-
-## Purpose
-
 The primary purpose of this repo is to research, experiment, and try to understand whether a general reactivity protocol is feasible, allowing:
 
   * Model systems to decouple themselves from view engines and reactivity libraries. 
   * View engines to decouple themselves from reactivity libraries.
+  * NNative HTML templates to be able to rely on minimal APIs, even if the browser doesn't yet ship with an implementation.
 
 Achieving this would enable application developers to:
 
 * Swap out their view layers without needing to re-write their models.
 * More easily mix multiple view layer technologies together without sync/reliability problems.
 * Choose between multiple reactivity implementations, picking the one that has the best performance characteristics based on their application needs. For example, one engine might be faster for initial view rendering, but another might be faster for view updating. Engines could also be selected based on target device. So, a lower memory engine could be used on mobile devices, for example.
+
+## Consumers
+
+There are three different consumers of the protocol: reactivity engines, view engines, and model/application developers. Let's look at the proposal from each of these perspectives, in reverse order.
+
+### Model and Application Developers
+
+The primary APIs needed by app developers are those that enable them to create reactive models. The protocol would provide both a declarative and an imperative way of creating object signals.
+
+**Example: Declaring a model with an observable property**
+
+```ts
+import { observable } from "@w3c-protocols/reactivity";
+
+export class Counter {
+  @observable accessor count = 0;
+
+  increment() {
+    this.count++;
+  }
+
+  decrement() {
+    this.count--;
+  }
+}
+```
+
+The `observable` decorator creates an observable property. The underlying protocol doesn't provide an implementation of the signal infrastructure, just a way for the model/app developer to declare something as reactive. We'll look at how the reactivity implementation provides the implementation shortly. There's also an imperative API, which can be used on any object like this:
+
+** Example: Using the imperative API to define an observable property**
+
+```ts
+import { Observable } from "@w3c-protocols/reactivity";
+
+Observable.defineProperty(someObject, "someProperty");
+```
+
+### View Engine Developers
+
+While app developers have a primary use case of creating reactive models and components, view engine developers primarily need to observe these reactive objects, so they can update DOM. The primary APIs being proposed for this are `ObjectObserver`, `PropertyObserver`, and `ComputedObserver`. These are named and their APIs are designed to follow the existing patterns put in place by `MutationObserver`, `ResizeObserver`, and `IntersectionObserver`. A view engine that wants to observe a binding and then update DOM would use the API like this:
+
+** Example: A view engine updating the DOM whenever a binding changes**
+
+```ts
+import { ComputedObserver } from "@w3c-protocols/reactivity";
+
+const updateDOM = () => element.innerText = counter.count;
+const observer = new ComputedObserver(o => o.observe(updateDOM));
+observer.observe(updateDOM);
+```
+
+In fact, you may recognize this as the `effect` pattern, provided by various libraries, which could generally be implemented on top of the protocol like this:
+
+** Example: Implementing an effect helper on top of the protocol**
+
+```ts
+function effect(func: Function) {
+  const observer = new ComputedObserver(o => o.observe(func));
+  observer.observe(func);
+  return observer;
+}
+```
+
+### Reactivity Engine Developers
+
+A reactivity engine that wants to provide an implementation of the protocol, must implement the following interface:
+
+```ts
+interface ReactivityEngine {
+  onAccess(target: object, propertyKey: string | symbol): void;
+  onChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void;
+  createComputedObserver(subscriber: Subscriber): ComputedObserver;
+  createPropertyObserver(subscriber: Subscriber): PropertyObserver;
+  createObjectObserver(subscriber: Subscriber): ObjectObserver;
+}
+```
+
+The app developer can then plug in the reactivity engine of their choice, with the following code:
+
+```ts
+import { ReactivityEngine } from "@w3c-protocols/reactivity";
+
+// Install any engine that implements the protocol.
+ReactivityEngine.install(myFavoriteReactivityEngine);
+```
+
+**NOTE:** By default, the protocol provides a noop implementation, so all reactive models will function properly without reactivity enabled.
+
+Here is a brief explanation of the interface methods:
+
+* `onAccess(...)` - The protocol will call this whenever an observable property is accessed, allowing the underlying implementation to track the access. This is invoked from the getter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackAccess(...)`.
+* `onChange(...)` - The protocol will call this whenever an observable property changes, allowing the underlying implementation to respond to the change. Thios is involked from the setter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackChange(...)`.
+* `createComputedObserver(...)` - The protocol calls this whenever `new ComputedObserver()` runs so that the implementation can provide its own computed observation mechanism.
+* `createPropertyObserver(...)` - The protocol calls this whenever `new PropertyObserver()` runs so that the implementation can provide its own property observation mechanism.
+* `createObjectObserver(...)` - The protocol calls this whenever `new ObjectObserver()` runs so that the implementation can provide its own object observation mechanism.
+
+Since `PropertyObserver` and `ObjectObserver` can both be implemented in terms of `ComputedObserver`, the protocol provides a `FallbackPropertyObserver` and `FallbackObjectObserver` based on `ComputedObserver`. This means that the underlying implementation is only required to implement `createComputedObserver()`. But certain implementations can choose to optimize property and object observation if they want to.
+
+The proposal repo contains a work-in-progress design for this protocol. It also contains two test reactivity engine implementations, as well as a test view engine, and a test application.
+
+> **WARNING:** Do not even think about using the test reactivity engines or the test view engine in a real app. They have been deliberately simplified, have known issues, and are not the least bit production-ready. They serve only to validate the protocol.
+
+## Open Questions
+
+There are still quite a few open questions:
+
+* Should the protocol enable view engines to mark batches of observers for more efficient observe/disconnect?
+* Should the protocol provide a way to create observable arrays and array observers?
+* Should the shared protocol library take on the responsibility of implementing common patterns on top of the protocol such as `signal`, `effect`, and `resource`?
