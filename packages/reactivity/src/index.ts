@@ -34,104 +34,41 @@ export interface ComputedObserver {
 export interface ReactivityEngine {
   onAccess(target: object, propertyKey: string | symbol): void;
   onChange(target: object, propertyKey: string | symbol, oldValue: any, newValue: any): void;
-  createPropertyObserver?(subscriber: Subscriber): PropertyObserver;
-  createObjectObserver?(subscriber: Subscriber): ObjectObserver;
+  createPropertyObserver(subscriber: Subscriber): PropertyObserver;
+  createObjectObserver(subscriber: Subscriber): ObjectObserver;
   createComputedObserver(subscriber: Subscriber): ComputedObserver;
 }
 
 const noopFunc = () => void 0;
 
-class NonObservingComputedObserver implements ComputedObserver {
-  constructor(_: Subscriber) {}
-
+const noopComputedObserver: ComputedObserver = {
+  disconnect: noopFunc,
   observe(func: Function, ...args: any[]) {
     return func(...args);
   }
+};
 
-  disconnect = noopFunc;
-}
+const noopObjectObserver: ObjectObserver = {
+  disconnect: noopFunc,
+  observe(target: any) {
+    return target;
+  }
+};
+
+const noopPropertyObserver: PropertyObserver = {
+  disconnect: noopFunc,
+  observe(target: any, propertyKey: string | symbol) {
+    return target[propertyKey];
+  },
+};
 
 let noopEngine: ReactivityEngine = {
   onAccess: noopFunc,
   onChange: noopFunc,
-  createComputedObserver(subscriber: Subscriber) {
-    return new NonObservingComputedObserver(subscriber);
-  }
+  createPropertyObserver() { return noopPropertyObserver;  },
+  createObjectObserver() { return noopObjectObserver; },
+  createComputedObserver() { return noopComputedObserver;  }
 };
-
-class FallbackPropertyObserver implements PropertyObserver {
-  #computedObserver: ComputedObserver;
-  #subscriber: SubscriberObject;
-  #oldValue: any;
-  #currentValue: any;
-  #target: any;
-  #propertyKey!: string | symbol;
-  #func!: Function;
-
-  constructor(subscriber: Subscriber) {
-    this.#subscriber = Subscriber.normalize(subscriber);
-    this.#computedObserver = currentEngine.createComputedObserver(this);
-  }
-
-  observe(target: any, propertyKey: string | symbol) {
-    this.#target = target;
-    this.#propertyKey = propertyKey;
-    this.#func = () => this.#target[propertyKey];
-    this.#oldValue = this.#currentValue;
-    this.#currentValue = this.#computedObserver.observe(this.#func);
-    return this.#currentValue;
-  }
-
-  disconnect(): void {
-    this.#target = null;
-    this.#oldValue = null;
-    this.#currentValue = null;
-    this.#computedObserver.disconnect();
-  }
-
-  handleChange(): void {
-    this.#oldValue = this.#currentValue;
-    this.#currentValue = this.#computedObserver.observe(this.#func);
-    this.#subscriber.handleChange(this.#target, this.#propertyKey, this.#oldValue, this.#currentValue);
-  }
-}
-
-class FallbackObjectObserver implements ObjectObserver {
-  #observers: PropertyObserver[] = [];
-  #subscriber: SubscriberObject;
-  #target: any;
-
-  constructor(subscriber: Subscriber) {
-    this.#subscriber = Subscriber.normalize(subscriber);
-  }
-
-  observe(target: any) {
-    if (target === this.#target) {
-      return;
-    }
-
-    this.disconnect();
-    this.#target = target;
-
-    for (const key of Observable.getAccessors(target)) {
-      const o = new PropertyObserver(this);
-      o.observe(target, key);
-      this.#observers.push(o);
-    }
-
-    return target;
-  }
-
-  disconnect(): void {
-    this.#target = null;
-    this.#observers.forEach(x => x.disconnect());
-    this.#observers.length = 0;
-  }
-
-  handleChange(target: any, propertyKey: string | symbol, oldValue: any, newValue: any): void {
-    this.#subscriber.handleChange(target, propertyKey, oldValue, newValue);
-  }
-}
 
 let currentEngine: ReactivityEngine = noopEngine;
 
@@ -153,22 +90,14 @@ export const ReactivityEngine = Object.freeze({
 });
 
 export const PropertyObserver = (function (subscriber: Subscriber) {
-  if (currentEngine.createPropertyObserver) {
-    return currentEngine.createPropertyObserver(subscriber);
-  }
-
-  return new FallbackPropertyObserver(subscriber); 
+  return currentEngine.createPropertyObserver(subscriber); 
 }) as any as {
   prototype: PropertyObserver;
   new(subscriber: Subscriber): PropertyObserver;
 }
 
 export const ObjectyObserver = (function (subscriber: Subscriber) {
-  if (currentEngine.createObjectObserver) {
-    return currentEngine.createObjectObserver(subscriber);
-  }
-
-  return new FallbackObjectObserver(subscriber); 
+  return currentEngine.createObjectObserver(subscriber); 
 }) as any as {
   prototype: ObjectObserver;
   new(subscriber: Subscriber): ObjectObserver;

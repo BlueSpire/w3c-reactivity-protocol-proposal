@@ -4,6 +4,7 @@ import {
   Subscriber, 
   type SubscriberObject
 } from "@w3c-protocols/reactivity";
+import { FallbackObjectObserver, FallbackPropertyObserver } from "@w3c-protocols/reactivity/fallbacks";
 
 let objectId = 0;
 function nextObjectId() {
@@ -164,5 +165,13 @@ export const testReactivityEngineTwo: ReactivityEngine = {
 
   createComputedObserver(subscriber: Subscriber): IComputedObserver {
     return new ComputedObserver(subscriber);
+  },
+
+  createObjectObserver(subscriber: Subscriber) {
+    return new FallbackObjectObserver(subscriber);
+  },
+
+  createPropertyObserver(subscriber: Subscriber) {
+    return new FallbackPropertyObserver(subscriber);
   }
 };
