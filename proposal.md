@@ -4,7 +4,7 @@ The primary purpose of this repo is to research, experiment, and try to understa
 
   * Model systems to decouple themselves from view engines and reactivity libraries. 
   * View engines to decouple themselves from reactivity libraries.
-  * NNative HTML templates to be able to rely on minimal APIs, even if the browser doesn't yet ship with an implementation.
+  * Native HTML templates to be able to rely on minimal APIs, even if the browser doesn't yet ship with an implementation.
 
 Achieving this would enable application developers to:
 
@@ -18,7 +18,7 @@ There are three different consumers of the protocol: reactivity engines, view en
 
 ### Model and Application Developers
 
-The primary APIs needed by app developers are those that enable them to create reactive models. The protocol would provide both a declarative and an imperative way of creating object signals.
+The primary APIs needed by app developers are those that enable them to create reactive values and models. The protocol provides both a declarative and an imperative way of creating property signals. It also provides low-level APIs for creating custom signals.
 
 **Example: Declaring a model with an observable property**
 
@@ -40,7 +40,7 @@ export class Counter {
 
 The `observable` decorator creates an observable property. The underlying protocol doesn't provide an implementation of the signal infrastructure, just a way for the model/app developer to declare something as reactive. We'll look at how the reactivity implementation provides the implementation shortly. There's also an imperative API, which can be used on any object like this:
 
-** Example: Using the imperative API to define an observable property**
+**Example: Using the imperative API to define an observable property**
 
 ```ts
 import { Observable } from "@w3c-protocols/reactivity";
@@ -48,11 +48,49 @@ import { Observable } from "@w3c-protocols/reactivity";
 Observable.defineProperty(someObject, "someProperty");
 ```
 
+Under the hood, both the declarative and the imperative APIs create properties where the getter calls the configured reactivity engine's `onAccess()` callback and the setter calls the engine's `onChange()` callback. 
+
+The protocol provides a facade to the underlying engine via the `Observable.trackAccess()` and `Observable.trackChange()` APIs for consumers that want to create custom signals. Here's how one could create a simple signal on top of the protocol:
+
+**Example: Creating a custom signal**
+
+```ts
+import { Observable } from "@w3c-protocols/reactivity";
+
+export function signal(value, name = generateUniqueSignalName()) {
+  const getValue = () => {
+    Observable.trackAccess(getValue, name);
+    return value;
+  }
+
+  const setValue = newValue => {
+    const oldValue = value;
+    value = newValue;
+    Observable.trackChange(getValue, name, oldValue, newValue);
+  }
+
+  getValue.set = setValue;
+  Reflect.defineProperty(getValue, "name", { value: name });
+
+  return getValue;
+}
+```
+
+**Example: Using a custom signal**
+
+```ts
+const count = signal(0);
+console.log('The count is: ' + count());
+
+count.set(3);
+console.log('The count is: ' + count());
+```
+
 ### View Engine Developers
 
-While app developers have a primary use case of creating reactive models and components, view engine developers primarily need to observe these reactive objects, so they can update DOM. The primary APIs being proposed for this are `ObjectObserver`, `PropertyObserver`, and `ComputedObserver`. These are named and their APIs are designed to follow the existing patterns put in place by `MutationObserver`, `ResizeObserver`, and `IntersectionObserver`. A view engine that wants to observe a binding and then update DOM would use the API like this:
+While app developers have a primary use case of creating reactive values, models, and components, view engine developers primarily need to observe these reactive objects, so they can update DOM. The primary APIs being proposed for this are `ObjectObserver`, `PropertyObserver`, and `ComputedObserver`. These are named and their APIs are designed to follow the existing patterns put in place by `MutationObserver`, `ResizeObserver`, and `IntersectionObserver`. A view engine that wants to observe a binding and then update DOM would use the API like this:
 
-** Example: A view engine updating the DOM whenever a binding changes**
+**Example: A view engine updating the DOM whenever a binding changes**
 
 ```ts
 import { ComputedObserver } from "@w3c-protocols/reactivity";
@@ -64,7 +102,7 @@ observer.observe(updateDOM);
 
 In fact, you may recognize this as the `effect` pattern, provided by various libraries, which could generally be implemented on top of the protocol like this:
 
-** Example: Implementing an effect helper on top of the protocol**
+**Example: Implementing an effect helper on top of the protocol**
 
 ```ts
 function effect(func: Function) {
@@ -74,9 +112,15 @@ function effect(func: Function) {
 }
 ```
 
+**Example: Using an effect helper to update the DOM**
+
+```ts
+effect(() => element.innerText = counter.count);
+```
+
 ### Reactivity Engine Developers
 
-A reactivity engine that wants to provide an implementation of the protocol, must implement the following interface:
+A reactivity engine that wants to provide an implementation, must implement the following interface:
 
 ```ts
 interface ReactivityEngine {
@@ -90,6 +134,8 @@ interface ReactivityEngine {
 
 The app developer can then plug in the reactivity engine of their choice, with the following code:
 
+**Example: Configuring a reactivity engine**
+
 ```ts
 import { ReactivityEngine } from "@w3c-protocols/reactivity";
 
@@ -102,7 +148,7 @@ ReactivityEngine.install(myFavoriteReactivityEngine);
 Here is a brief explanation of the interface methods:
 
 * `onAccess(...)` - The protocol will call this whenever an observable property is accessed, allowing the underlying implementation to track the access. This is invoked from the getter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackAccess(...)`.
-* `onChange(...)` - The protocol will call this whenever an observable property changes, allowing the underlying implementation to respond to the change. Thios is involked from the setter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackChange(...)`.
+* `onChange(...)` - The protocol will call this whenever an observable property changes, allowing the underlying implementation to respond to the change. This is invoked from the setter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackChange(...)`.
 * `createComputedObserver(...)` - The protocol calls this whenever `new ComputedObserver()` runs so that the implementation can provide its own computed observation mechanism.
 * `createPropertyObserver(...)` - The protocol calls this whenever `new PropertyObserver()` runs so that the implementation can provide its own property observation mechanism.
 * `createObjectObserver(...)` - The protocol calls this whenever `new ObjectObserver()` runs so that the implementation can provide its own object observation mechanism.
@@ -115,8 +161,8 @@ The proposal repo contains a work-in-progress design for this protocol. It also 
 
 ## Open Questions
 
-There are still quite a few open questions:
-
-* Should the protocol enable view engines to mark batches of observers for more efficient observe/disconnect?
+* Should the protocol enable view engines to mark groups of observers for more efficient observe/disconnect?
+  * e.g. `Observable.pushScope()`, `Observable.popScope()`, and `scope.disconnect()`.
 * Should the protocol provide a way to create observable arrays and array observers?
+  * e.g. `const a = Observable.array(1,2,3,4,5);` and `new ArrayObserver(...).observe(a);`;
 * Should the shared protocol library take on the responsibility of implementing common patterns on top of the protocol such as `signal`, `effect`, and `resource`?

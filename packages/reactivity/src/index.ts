@@ -62,7 +62,7 @@ const noopPropertyObserver: PropertyObserver = {
   },
 };
 
-let noopEngine: ReactivityEngine = {
+const noopEngine: ReactivityEngine = {
   onAccess: noopFunc,
   onChange: noopFunc,
   createPropertyObserver() { return noopPropertyObserver;  },
