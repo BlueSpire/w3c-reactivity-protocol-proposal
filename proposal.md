@@ -118,9 +118,11 @@ function effect(func: Function) {
 effect(() => element.innerText = counter.count);
 ```
 
+Each of the `*Observer` classes take a `Subcriber` in its consturctor, just like the standard `MutationObserver`, `ResizeObserver`, and `IntersectionObserver`. Following the same pattern, they each also have `observe(...)` and `disconnect()` methods. The implementation of each of these is provided by the underlying reactivity engine.
+
 ### Reactivity Engine Developers
 
-A reactivity engine that wants to provide an implementation, must implement the following interface:
+A reactivity engine must implement the following interface:
 
 ```ts
 interface ReactivityEngine {
@@ -139,7 +141,7 @@ The app developer can then plug in the reactivity engine of their choice, with t
 ```ts
 import { ReactivityEngine } from "@w3c-protocols/reactivity";
 
-// Install any engine that implements the protocol.
+// Install any engine that implements the interface.
 ReactivityEngine.install(myFavoriteReactivityEngine);
 ```
 
@@ -147,13 +149,13 @@ ReactivityEngine.install(myFavoriteReactivityEngine);
 
 Here is a brief explanation of the interface methods:
 
-* `onAccess(...)` - The protocol will call this whenever an observable property is accessed, allowing the underlying implementation to track the access. This is invoked from the getter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackAccess(...)`.
-* `onChange(...)` - The protocol will call this whenever an observable property changes, allowing the underlying implementation to respond to the change. This is invoked from the setter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackChange(...)`.
+* `onAccess(...)` - The protocol will call this whenever an observable value is accessed, allowing the underlying implementation to track the access. This is invoked from the getter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackAccess(...)`.
+* `onChange(...)` - The protocol will call this whenever an observable value changes, allowing the underlying implementation to respond to the change. This is invoked from the setter of a protocol-defined property. Custom signal implementations can also directly invoke this via `Observable.trackChange(...)`.
 * `createComputedObserver(...)` - The protocol calls this whenever `new ComputedObserver()` runs so that the implementation can provide its own computed observation mechanism.
 * `createPropertyObserver(...)` - The protocol calls this whenever `new PropertyObserver()` runs so that the implementation can provide its own property observation mechanism.
 * `createObjectObserver(...)` - The protocol calls this whenever `new ObjectObserver()` runs so that the implementation can provide its own object observation mechanism.
 
-Since `PropertyObserver` and `ObjectObserver` can both be implemented in terms of `ComputedObserver`, the protocol provides a `FallbackPropertyObserver` and `FallbackObjectObserver` based on `ComputedObserver`. This means that the underlying implementation is only required to implement `createComputedObserver()`. But certain implementations can choose to optimize property and object observation if they want to.
+Since `ObjectObserver` can be implemented in terms of `PropertyObserver` and `PropertyObserver` can both be implemented in terms of `ComputedObserver`, the protocol provides a `FallbackPropertyObserver` and `FallbackObjectObserver` that do just that. This means that the underlying implementation is only required to implement `createComputedObserver()`. But implementations can choose to optimize property and object observation if they want to by providing observers for these scenarios.
 
 The proposal repo contains a work-in-progress design for this protocol. It also contains two test reactivity engine implementations, as well as a test view engine, and a test application.
 
@@ -165,4 +167,4 @@ The proposal repo contains a work-in-progress design for this protocol. It also 
   * e.g. `Observable.pushScope()`, `Observable.popScope()`, and `scope.disconnect()`.
 * Should the protocol provide a way to create observable arrays and array observers?
   * e.g. `const a = Observable.array(1,2,3,4,5);` and `new ArrayObserver(...).observe(a);`;
-* Should the shared protocol library take on the responsibility of implementing common patterns on top of the protocol such as `signal`, `effect`, and `resource`?
+* Should the shared protocol library take on the responsibility of implementing common patterns on top of the protocol such as `signal`, `effect`, and `resource`? (An effect implementation is currently provided.)

@@ -1,6 +1,6 @@
 # W3C Reactivity Protocol Proposal
 
-This repo contains a work-in-progress design for a universal reactivity protocol, as part of the ongoing work of the W3C Web Components Community Group's Community Protocols effort. It also contains two test reactivity engine implementations, as well as a test view engine and a test application.
+This repo contains a work-in-progress design for a universal reactivity protocol, as part of my ongoing work with the W3C Web Components Community Group's Community Protocols effort. It also contains two test reactivity engine implementations, as well as a test view engine and a test application.
 
 Here are a few interesting places to look:
 
