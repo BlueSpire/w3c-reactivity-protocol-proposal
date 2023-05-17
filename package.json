@@ -1,5 +1,5 @@
 {
-    "name": "@bluespire/reactivity",
+    "name": "@bluespire/w3c-reactivity-protocol-proposal",
     "private": true,
     "version": "0.1.0",
     "workspaces": [
