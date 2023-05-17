@@ -168,3 +168,4 @@ The proposal repo contains a work-in-progress design for this protocol. It also 
 * Should the protocol provide a way to create observable arrays and array observers?
   * e.g. `const a = Observable.array(1,2,3,4,5);` and `new ArrayObserver(...).observe(a);`;
 * Should the shared protocol library take on the responsibility of implementing common patterns on top of the protocol such as `signal`, `effect`, and `resource`? (An effect implementation is currently provided.)
+* Should the protocol include a standard update queue?
