@@ -1,5 +1,10 @@
 # W3C Reactivity Protocol Proposal
 
+See the issue in the protocol repo here for the latest discussion: https://github.com/webcomponents-cg/community-protocols/issues/43
+There are some alternate proposals which I'm personally even more interested in than this.
+
+---
+
 This repo contains a work-in-progress design for a universal reactivity protocol, as part of my ongoing work with the W3C Web Components Community Group's Community Protocols effort. It also contains two test reactivity engine implementations, as well as a test view engine and a test application.
 
 Here are a few interesting places to look:
